@@ -232,7 +232,7 @@
           clearTimeout(t);
           if (v && v.metinler) Object.keys(v.metinler).forEach(k => { const s = String(v.metinler[k] || "").trim(); if (s) this.metinler[k] = s; });
           if (v && Array.isArray(v.fotolar)) this.fotolar = v.fotolar;
-          if (v && Number.isFinite(Number(v.sayac)) && Number(v.sayac) > 0) this.ziyaret = Number(v.sayac);
+          if (v && v.sayac !== "" && v.sayac != null && Number.isFinite(Number(v.sayac)) && Number(v.sayac) >= 0) this.ziyaret = Number(v.sayac);   // sıfır da gösterilir
           // Ay ve yıl dökümü (Apps Script sürümü destekliyorsa)
           if (v && Number.isFinite(Number(v.sayac_ay)) && Number.isFinite(Number(v.sayac_yil)) && v.donem_yil) { this.ziyaretAy = Number(v.sayac_ay); this.ziyaretYil = Number(v.sayac_yil); this.donemYil = String(v.donem_yil); }
           if (v && v.guncelleme) this.veriGuncelleme = String(v.guncelleme);
@@ -269,7 +269,7 @@
       const parca = [];
       const sb = (n) => `<b class="sb-sayi" data-n="${n}"></b>`;
       if (bant) parca.push(`<span class="sb-claude"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5c.6 4.4 2.1 5.9 6.5 6.5-4.4.6-5.9 2.1-6.5 6.5-.6-4.4-2.1-5.9-6.5-6.5 4.4-.6 5.9-2.1 6.5-6.5Z" fill="currentColor"/></svg><span>${esc0(I.t("gelistiren"))}</span></span>`);
-      if (this.ziyaret) {
+      if (this.ziyaret != null) {
         const goz = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M1.5 10S5 3.8 10 3.8 18.5 10 18.5 10 15 16.2 10 16.2 1.5 10 1.5 10Z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.6" fill="currentColor"/></svg>`;
         const metin = this.ziyaretAy != null
           ? I.t("ziyaret_dokum", { ay: sb(this.ziyaretAy), yil: I.en ? this.donemYil : this.yilEki(this.donemYil), yilS: sb(this.ziyaretYil), top: sb(this.ziyaret) })
