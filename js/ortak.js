@@ -236,10 +236,13 @@
           // Ay ve yıl dökümü (Apps Script sürümü destekliyorsa)
           if (v && Number.isFinite(Number(v.sayac_ay)) && Number.isFinite(Number(v.sayac_yil)) && v.donem_yil) { this.ziyaretAy = Number(v.sayac_ay); this.ziyaretYil = Number(v.sayac_yil); this.donemYil = String(v.donem_yil); }
           if (v && v.guncelleme) this.veriGuncelleme = String(v.guncelleme);
+          // Sayaç bir sonraki açılışta beklemeden görünsün diye son değerler tarayıcıda saklanır
+          if (this.ziyaret != null) try { localStorage.setItem("sayac_onbellek", JSON.stringify({ ayK: new Date().toISOString().slice(0, 7), top: this.ziyaret, ay: this.ziyaretAy, yil: this.ziyaretYil, donem: this.donemYil })); } catch (e) { /* yoksay */ }
           if (v && Array.isArray(v.yapilar) && v.yapilar.length > 50) { this.canli = true; return v.yapilar; }
           return null;
         })
-        .catch(() => null);
+        .catch(() => null)
+        .then(x => { this._yuklendi = true; return x; });
       return this._p;
     },
 
@@ -269,9 +272,21 @@
       const parca = [];
       const sb = (n) => `<b class="sb-sayi" data-n="${n}"></b>`;
       if (bant) parca.push(`<span class="sb-claude"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5c.6 4.4 2.1 5.9 6.5 6.5-4.4.6-5.9 2.1-6.5 6.5-.6-4.4-2.1-5.9-6.5-6.5 4.4-.6 5.9-2.1 6.5-6.5Z" fill="currentColor"/></svg><span>${esc0(I.t("gelistiren"))}</span></span>`);
-      if (this.ziyaret != null) {
+      // Apps Script yanıtı gelene kadar: önce tarayıcıdaki son değerler, o da yoksa aynı satır yer tutucuyla gösterilir (satır sonradan belirip sayfayı kaydırmasın)
+      if (this.ziyaret == null && !this._sayacOkundu) {
+        this._sayacOkundu = true;
+        try {
+          const c = JSON.parse(localStorage.getItem("sayac_onbellek") || "null");
+          if (c && c.ayK === new Date().toISOString().slice(0, 7) && Number.isFinite(c.top)) { this.ziyaret = c.top; if (c.ay != null) { this.ziyaretAy = c.ay; this.ziyaretYil = c.yil; this.donemYil = c.donem; } }
+        } catch (e) { /* yoksay */ }
+      }
+      const bekliyor = this.ziyaret == null && CFG.FEEDBACK_ENDPOINT && !this._yuklendi;
+      if (this.ziyaret != null || bekliyor) {
         const goz = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M1.5 10S5 3.8 10 3.8 18.5 10 18.5 10 15 16.2 10 16.2 1.5 10 1.5 10Z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.6" fill="currentColor"/></svg>`;
-        const metin = this.ziyaretAy != null
+        const yilSimdi = String(new Date().getFullYear());
+        const metin = bekliyor
+          ? I.t("ziyaret_dokum", { ay: "<b>–</b>", yil: I.en ? yilSimdi : this.yilEki(yilSimdi), yilS: "<b>–</b>", top: "<b>–</b>" })
+          : this.ziyaretAy != null
           ? I.t("ziyaret_dokum", { ay: sb(this.ziyaretAy), yil: I.en ? this.donemYil : this.yilEki(this.donemYil), yilS: sb(this.ziyaretYil), top: sb(this.ziyaret) })
           : `${sb(this.ziyaret)} ${esc0(I.t("ziyaret"))}`;
         parca.push(`<span class="sb-ziyaret" title="${esc0(I.t("ziyaret_not"))}">${goz}<span>${metin}</span></span>`);
