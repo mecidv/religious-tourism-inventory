@@ -1,1 +1,4 @@
 .DS_Store
+
+# İndirilebilir veri dosyası depoda tutulmaz (makale yayımlanana kadar); veri sürümü akışı onu yalnızca Zenodo için üretir
+data/envanter.csv

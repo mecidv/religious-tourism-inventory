@@ -1,5 +1,8 @@
-# Ayda bir, e-tablodaki envanter değiştiyse veriyi (data/yapilar.json, data/envanter.csv) depoya alır ve
-# Zenodo'ya aynı DOI çatısı (10.5281/zenodo.24338235) altında yeni bir sürüm olarak YALNIZCA veri dosyalarını yükler.
+# Ayda bir, e-tablodaki envanter değiştiyse sitenin verisini (data/yapilar.json) depoya alır.
+# İndirilebilir veri dosyası (data/envanter.csv) depoya konmaz: makale yayımlanana kadar kolayca erişilmesin diye
+# yalnızca bu çalışma sırasında üretilir ve Zenodo'ya gider. Zenodo yüklemesi artık yalnızca elle çalıştırmada yapılır;
+# aylık otomatik çalışma Zenodo'ya yeni sürüm göndermez (makale yayımlanınca bu kısıt kaldırılabilir).
+# Zenodo'ya aynı DOI çatısı (10.5281/zenodo.24338235) altında yeni bir sürüm olarak YALNIZCA veri dosyaları yüklenir.
 # Kaynak kod Zenodo'ya gönderilmez. Zenodo yüklemesi için deponun ZENODO_TOKEN gizli anahtarı gerekir.
 # Elle çalıştırmak için: Actions › Veri sürümü › Run workflow.
 name: Veri sürümü
@@ -36,17 +39,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- data/; then
+          if git diff --quiet -- data/yapilar.json; then
             echo "Veri değişmedi."; echo "degisti=false" >> "$GITHUB_OUTPUT"
           else
-            git add data/yapilar.json data/envanter.csv
+            git add data/yapilar.json
             git commit -m "Envanter verisi güncellendi ($(TZ=Europe/Istanbul date +%Y-%m-%d))"
             git push
             echo "degisti=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Zenodo'ya yalnızca veriyi yükle
-        if: steps.kayit.outputs.degisti == 'true' || inputs.zorla
+        if: github.event_name == 'workflow_dispatch' && (steps.kayit.outputs.degisti == 'true' || inputs.zorla)
         env:
           ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
-          YAYIMLA: ${{ github.event_name == 'schedule' || inputs.yayimla }}
+          YAYIMLA: ${{ inputs.yayimla }}
         run: python araclar/zenodo_yukle.py
