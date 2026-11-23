@@ -222,7 +222,10 @@
       const t = setTimeout(() => ctrl && ctrl.abort(), 12000);
       // Ziyaret: aynı tarayıcıdan günde bir kez sayılır; kişisel veri gönderilmez
       let ziyaret = "";
-      try { const gun = new Date().toISOString().slice(0, 10); if (localStorage.getItem("ziyaret_gun") !== gun) { localStorage.setItem("ziyaret_gun", gun); ziyaret = "&ziyaret=1"; } } catch (e) { /* depolama kapalıysa sayılmaz */ }
+      // ?sayma=0 bu tarayıcıyı sayaç dışında bırakır (site sahibinin kendi ziyaretleri için), ?sayma=1 yeniden saydırır
+      try { const sp = new URLSearchParams(location.search).get("sayma"); if (sp === "0") localStorage.setItem("sayma", "hayir"); else if (sp === "1") localStorage.removeItem("sayma"); } catch (e) { /* yoksay */ }
+      let saymaKapali = false; try { saymaKapali = localStorage.getItem("sayma") === "hayir"; } catch (e) { /* yoksay */ }
+      if (!saymaKapali) try { const gun = new Date().toISOString().slice(0, 10); if (localStorage.getItem("ziyaret_gun") !== gun) { localStorage.setItem("ziyaret_gun", gun); ziyaret = "&ziyaret=1"; } } catch (e) { /* depolama kapalıysa sayılmaz */ }
       this._p = fetch(CFG.FEEDBACK_ENDPOINT + "?islem=veri" + ziyaret, ctrl ? { signal: ctrl.signal } : {})
         .then(r => r.json())
         .then(v => {
